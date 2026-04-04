@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>げんきポイント</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream:#FDF6EC; --warm-white:#FFFAF3;
+    --deep-green:#2D5A27; --mid-green:#4A7C3F; --light-green:#7FB069;
+    --accent-orange:#E07B39; --accent-gold:#D4A843;
+    --text-dark:#2C2416; --text-mid:#5A4A35; --text-light:#9A876A;
+    --shadow:rgba(45,90,39,.12); --radius:20px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--cream);color:var(--text-dark);min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:radial-gradient(circle at 20% 20%,rgba(127,176,105,.08) 0%,transparent 50%),
+    radial-gradient(circle at 80% 80%,rgba(212,168,67,.08) 0%,transparent 50%)}
+  .app{max-width:420px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative;z-index:1}
+
+  /* ── Login ── */
+  .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .login-card{background:#fff;border-radius:24px;padding:40px 32px;width:100%;max-width:380px;box-shadow:0 8px 40px var(--shadow)}
+  .login-logo{font-family:'Noto Serif JP',serif;font-size:28px;font-weight:900;color:var(--deep-green);text-align:center;margin-bottom:4px}
+  .login-sub{text-align:center;font-size:13px;color:var(--text-light);margin-bottom:32px;letter-spacing:.1em}
+  .login-label{display:block;font-size:12px;font-weight:700;color:var(--text-mid);letter-spacing:.08em;margin-bottom:6px}
+  .login-input{width:100%;padding:14px 16px;border:2px solid #E8E0D4;border-radius:12px;font-size:16px;font-family:'Noto Sans JP',sans-serif;background:#fff;color:var(--text-dark);outline:none;transition:border-color .2s;margin-bottom:14px}
+  .login-input:focus{border-color:var(--mid-green)}
+  .login-btn{width:100%;padding:16px;background:linear-gradient(135deg,var(--deep-green),var(--mid-green));border:none;border-radius:14px;color:#fff;font-size:16px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;margin-top:4px;box-shadow:0 4px 16px rgba(45,90,39,.3);transition:all .2s}
+  .login-btn:active{transform:scale(.98)}
+  .login-btn:disabled{opacity:.6;cursor:not-allowed}
+  .login-error{background:#FEE;border:1px solid #F99;border-radius:10px;padding:10px 14px;font-size:13px;color:#c0392b;margin-bottom:14px;display:none}
+  .login-hint{text-align:center;font-size:11px;color:var(--text-light);margin-top:20px}
+
+  /* ── Header ── */
+  .header{background:var(--deep-green);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+  .header-logo{font-family:'Noto Serif JP',serif;font-size:20px;font-weight:900;color:var(--accent-gold)}
+  .header-logo span{color:#fff;font-size:12px;display:block;font-weight:300;font-family:'Noto Sans JP',sans-serif}
+  .header-right{display:flex;align-items:center;gap:10px}
+  .header-name{font-size:13px;color:rgba(255,255,255,.85);font-weight:500}
+  .logout-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:8px;color:#fff;font-size:12px;padding:5px 10px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:background .2s}
+  .logout-btn:hover{background:rgba(255,255,255,.25)}
+
+  /* ── Point card ── */
+  .point-card{background:linear-gradient(135deg,var(--deep-green) 0%,var(--mid-green) 100%);margin:20px 16px;border-radius:var(--radius);padding:28px 28px 24px;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(45,90,39,.25)}
+  .point-card::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.05)}
+  .point-card-label{font-size:12px;color:rgba(255,255,255,.65);letter-spacing:.15em}
+  .point-value{font-family:'Noto Serif JP',serif;font-size:60px;font-weight:900;color:var(--accent-gold);line-height:1;margin:8px 0 4px;letter-spacing:-2px}
+  .point-value span{font-size:20px;font-family:'Noto Sans JP',sans-serif;font-weight:500;color:rgba(255,255,255,.8)}
+  .point-progress-wrap{margin-top:18px}
+  .point-progress-header{display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.6);margin-bottom:8px}
+  .point-progress-bar{height:8px;background:rgba(255,255,255,.15);border-radius:99px;overflow:hidden}
+  .point-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent-gold),#F5C842);border-radius:99px;transition:width 1s ease}
+
+  /* ── Nav ── */
+  .nav-tabs{display:flex;margin:0 16px 8px;background:rgba(255,255,255,.7);border-radius:14px;padding:4px;gap:2px}
+  .nav-tab{flex:1;padding:10px 4px;border:none;background:transparent;border-radius:10px;font-size:12px;font-family:'Noto Sans JP',sans-serif;font-weight:500;color:var(--text-light);cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:3px}
+  .nav-tab .tab-icon{font-size:18px}
+  .nav-tab.active{background:var(--deep-green);color:#fff;box-shadow:0 2px 8px var(--shadow)}
+
+  /* ── Sections ── */
+  .section{display:none;padding:0 16px 100px}
+  .section.active{display:block}
+  .section-title{font-family:'Noto Serif JP',serif;font-size:20px;font-weight:700;color:var(--deep-green);margin:20px 0 14px;display:flex;align-items:center;gap:10px}
+  .section-title::after{content:'';flex:1;height:2px;background:linear-gradient(90deg,var(--light-green),transparent);border-radius:99px}
+  .summary-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px}
+  .summary-badge{background:#fff;border-radius:14px;padding:14px 10px;text-align:center;box-shadow:0 2px 8px var(--shadow)}
+  .summary-val{font-family:'Noto Serif JP',serif;font-size:24px;font-weight:900;color:var(--deep-green);line-height:1}
+  .summary-unit{font-size:10px;color:var(--text-light)}
+  .summary-label{font-size:11px;color:var(--text-mid);margin-top:4px}
+  .rec-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+  .rec-card{background:#fff;border-radius:16px;padding:18px 14px;box-shadow:0 2px 12px var(--shadow);cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+  .rec-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--bg-accent,var(--light-green))}
+  .rec-card:active{transform:scale(.97)}
+  .rec-card-icon{font-size:32px;margin-bottom:8px}
+  .rec-card-name{font-size:14px;font-weight:700;color:var(--text-dark);line-height:1.3}
+  .rec-card-pts{display:inline-flex;align-items:center;gap:3px;margin-top:8px;background:var(--cream);border-radius:99px;padding:3px 10px;font-size:12px;font-weight:700;color:var(--accent-orange)}
+  .add-btn{width:100%;padding:16px;background:linear-gradient(135deg,var(--accent-orange),#E8924D);border:none;border-radius:14px;color:#fff;font-size:15px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(224,123,57,.35);transition:all .2s;margin-bottom:24px}
+  .add-btn:active{transform:scale(.98)}
+  .history-list{display:flex;flex-direction:column;gap:10px}
+  .history-item{background:#fff;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px var(--shadow);animation:slideIn .3s ease}
+  @keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .history-icon{font-size:28px;width:48px;height:48px;background:var(--cream);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .history-info{flex:1}
+  .history-name{font-size:14px;font-weight:700;color:var(--text-dark)}
+  .history-date{font-size:11px;color:var(--text-light);margin-top:2px}
+  .history-note{font-size:11px;color:var(--text-mid);margin-top:4px;font-style:italic}
+  .history-pts{font-size:16px;font-weight:900;color:var(--accent-orange);font-family:'Noto Serif JP',serif;white-space:nowrap}
+  .history-pts::after{content:'pt';font-size:10px;font-family:'Noto Sans JP',sans-serif}
+  .delete-btn{background:none;border:none;font-size:14px;cursor:pointer;color:#ccc;padding:4px;border-radius:6px;transition:color .2s}
+  .delete-btn:hover{color:#e55}
+  .reward-grid{display:flex;flex-direction:column;gap:12px}
+  .reward-card{background:#fff;border-radius:16px;padding:18px;display:flex;align-items:center;gap:16px;box-shadow:0 2px 12px var(--shadow);position:relative;overflow:hidden}
+  .reward-card.locked{opacity:.6}
+  .reward-card::after{content:'';position:absolute;right:0;top:0;bottom:0;width:4px;background:var(--light-green)}
+  .reward-card.locked::after{background:#ccc}
+  .reward-icon{font-size:40px;width:60px;height:60px;background:var(--cream);border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .reward-info{flex:1}
+  .reward-name{font-size:15px;font-weight:700;color:var(--text-dark)}
+  .reward-desc{font-size:11px;color:var(--text-light);margin-top:3px}
+  .reward-cost{text-align:center;flex-shrink:0}
+  .reward-cost-val{font-family:'Noto Serif JP',serif;font-size:22px;font-weight:900;color:var(--accent-gold);line-height:1}
+  .reward-cost-label{font-size:9px;color:var(--text-light);letter-spacing:.1em}
+  .exchange-btn{display:block;width:100%;margin-top:10px;padding:7px;border-radius:8px;border:none;background:var(--deep-green);color:#fff;font-size:12px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all .2s}
+  .exchange-btn:disabled{background:#ccc;cursor:not-allowed}
+  .exchange-btn:not(:disabled):active{transform:scale(.97)}
+
+  /* ── Modal ── */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .3s}
+  .modal-overlay.open{opacity:1;pointer-events:all}
+  .modal{background:var(--warm-white);border-radius:24px 24px 0 0;padding:28px 24px 40px;width:100%;transform:translateY(100%);transition:transform .3s ease}
+  .modal-overlay.open .modal{transform:translateY(0)}
+  .modal-handle{width:40px;height:4px;background:#ddd;border-radius:99px;margin:0 auto 20px}
+  .modal-title{font-family:'Noto Serif JP',serif;font-size:20px;font-weight:700;color:var(--deep-green);margin-bottom:20px;text-align:center}
+  .form-group{margin-bottom:16px}
+  .form-label{display:block;font-size:12px;font-weight:700;color:var(--text-mid);letter-spacing:.08em;margin-bottom:6px}
+  .form-input,.form-textarea{width:100%;padding:12px 14px;border:2px solid #E8E0D4;border-radius:12px;font-size:15px;font-family:'Noto Sans JP',sans-serif;background:#fff;color:var(--text-dark);outline:none;transition:border-color .2s}
+  .form-input:focus,.form-textarea:focus{border-color:var(--mid-green)}
+  .form-textarea{resize:none;height:80px}
+  .rec-type-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .rec-type-btn{padding:10px 6px;border:2px solid #E8E0D4;border-radius:12px;background:#fff;cursor:pointer;text-align:center;transition:all .2s}
+  .rec-type-btn.selected{border-color:var(--mid-green);background:rgba(74,124,63,.08)}
+  .rec-type-btn .btn-icon{font-size:24px;display:block}
+  .rec-type-btn .btn-label{font-size:11px;font-family:'Noto Sans JP',sans-serif;color:var(--text-mid);margin-top:4px}
+  .submit-btn{width:100%;padding:16px;background:linear-gradient(135deg,var(--deep-green),var(--mid-green));border:none;border-radius:14px;color:#fff;font-size:16px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;margin-top:8px;box-shadow:0 4px 16px rgba(45,90,39,.3);transition:all .2s}
+  .submit-btn:disabled{opacity:.5;cursor:not-allowed}
+
+  /* ── Toast ── */
+  .toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--deep-green);color:#fff;padding:12px 24px;border-radius:99px;font-size:14px;font-weight:500;z-index:300;opacity:0;transition:all .3s;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.error{background:#c0392b}
+  .loading{text-align:center;padding:40px;color:var(--text-light);font-size:14px}
+  .spinner{display:inline-block;width:24px;height:24px;border:3px solid var(--light-green);border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;margin-bottom:8px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .empty-state{text-align:center;padding:40px 20px;color:var(--text-light)}
+  .empty-state-icon{font-size:48px;margin-bottom:12px}
+  .empty-state-text{font-size:14px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<!-- ログイン画面 -->
+<div id="login-screen">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">🌿 げんきポイント</div>
+      <div class="login-sub">健康管理アプリ</div>
+      <div class="login-error" id="login-error"></div>
+      <label class="login-label">ユーザー名</label>
+      <input class="login-input" type="text" id="login-username" placeholder="username" autocomplete="username">
+      <label class="login-label">パスワード</label>
+      <input class="login-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+      <button class="login-btn" id="login-btn" onclick="doLogin()">ログイン</button>
+      <div class="login-hint">
+        サンプル: <strong>hanako</strong> / <strong>user1234</strong><br>
+        管理者: <strong>admin</strong> / <strong>admin1234</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- メインアプリ -->
+<div class="app" id="main-app" style="display:none">
+  <div class="header">
+    <div class="header-logo">げんきポイント<span>健康管理アプリ</span></div>
+    <div class="header-right">
+      <span class="header-name" id="header-name"></span>
+      <button class="logout-btn" onclick="doLogout()">ログアウト</button>
+    </div>
+  </div>
+
+  <div class="point-card">
+    <div class="point-card-label">現在のポイント</div>
+    <div class="point-value" id="display-points">—<span>pt</span></div>
+    <div class="point-progress-wrap">
+      <div class="point-progress-header">
+        <span>次のリワードまで</span>
+        <span id="progress-text">—</span>
+      </div>
+      <div class="point-progress-bar">
+        <div class="point-progress-fill" id="progress-bar" style="width:0%"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('home')" id="tab-home"><span class="tab-icon">🏠</span>ホーム</button>
+    <button class="nav-tab" onclick="switchTab('rec')" id="tab-rec"><span class="tab-icon">📋</span>レク記録</button>
+    <button class="nav-tab" onclick="switchTab('reward')" id="tab-reward"><span class="tab-icon">🎁</span>リワード</button>
+  </div>
+
+  <div class="section active" id="section-home">
+    <div class="section-title">今月のまとめ</div>
+    <div class="summary-row">
+      <div class="summary-badge"><div class="summary-val" id="summary-count">—</div><div class="summary-unit">回</div><div class="summary-label">参加回数</div></div>
+      <div class="summary-badge"><div class="summary-val" id="summary-pts">—</div><div class="summary-unit">pt</div><div class="summary-label">今月の獲得</div></div>
+      <div class="summary-badge"><div class="summary-val" id="summary-streak">—</div><div class="summary-unit">日</div><div class="summary-label">連続参加</div></div>
+    </div>
+    <div class="section-title">レクリエーション</div>
+    <div class="rec-grid" id="rec-grid"><div class="loading"><div class="spinner"></div></div></div>
+    <button class="add-btn" onclick="openModal(null)">＋ レクリエーションを記録する</button>
+  </div>
+
+  <div class="section" id="section-rec">
+    <div class="section-title">参加履歴</div>
+    <div class="history-list" id="history-list"><div class="loading"><div class="spinner"></div></div></div>
+  </div>
+
+  <div class="section" id="section-reward">
+    <div class="section-title">リワード交換所</div>
+    <div class="reward-grid" id="reward-list"><div class="loading"><div class="spinner"></div></div></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">レクリエーションを記録</div>
+    <div class="form-group">
+      <label class="form-label">種類を選ぶ</label>
+      <div class="rec-type-grid" id="modal-rec-grid"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">日付</label>
+      <input type="date" class="form-input" id="rec-date">
+    </div>
+    <div class="form-group">
+      <label class="form-label">メモ（任意）</label>
+      <textarea class="form-textarea" id="rec-note" placeholder="今日の様子を書きましょう..."></textarea>
+    </div>
+    <button class="submit-btn" id="submit-btn" onclick="submitRec()">記録してポイントをもらう 🎉</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:8000';
+const NEXT_PT = 1000;
+let token = localStorage.getItem('genki_token');
+let currentUser = null;
+let recTypes = [];
+let selectedRecTypeId = null;
+let selectedRecPts = 0;
+const cardAccents = ['#7FB069','#D4A843','#E07B39','#5B8DB8','#A67DB8','#4A7C3F','#8B6F47','#B8A43D','#5B8DB8'];
+
+// ── Auth ──────────────────────────────────────
+async function doLogin() {
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-error');
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  err.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'ログイン中...';
+  try {
+    const res = await fetch(`${API}/api/auth/login`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'ログインに失敗しました');
+    token = data.token;
+    currentUser = data.user;
+    localStorage.setItem('genki_token', token);
+    showApp();
+  } catch(e) {
+    err.textContent = e.message; err.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'ログイン';
+  }
+}
+
+// Enterキーでログイン
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
+});
+
+async function tryAutoLogin() {
+  if (!token) return;
+  try {
+    const me = await api('GET', '/api/auth/me');
+    currentUser = me;
+    showApp();
+  } catch { localStorage.removeItem('genki_token'); token = null; }
+}
+
+function doLogout() {
+  localStorage.removeItem('genki_token');
+  token = null; currentUser = null;
+  document.getElementById('main-app').style.display = 'none';
+  document.getElementById('login-screen').style.display = '';
+}
+
+async function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = '';
+  document.getElementById('header-name').textContent = currentUser.name + ' さん';
+  document.getElementById('rec-date').value = new Date().toISOString().slice(0,10);
+  await Promise.all([loadRecTypes(), loadUserData()]);
+}
+
+// ── Data ─────────────────────────────────────
+async function loadUserData() {
+  const [summary, rewards] = await Promise.all([
+    api('GET', `/api/users/${currentUser.id}/summary`),
+    api('GET', '/api/rewards'),
+  ]);
+  currentUser.points = summary.user.points;
+  updatePointDisplay();
+  document.getElementById('summary-count').textContent = summary.month_count;
+  document.getElementById('summary-pts').textContent   = summary.month_points;
+  document.getElementById('summary-streak').textContent = summary.streak_days;
+  renderRewards(rewards);
+  await loadHistory();
+}
+
+function updatePointDisplay() {
+  const pts = currentUser.points;
+  document.getElementById('display-points').innerHTML = pts + '<span>pt</span>';
+  const pct = Math.min((pts % NEXT_PT) / NEXT_PT * 100, 100);
+  document.getElementById('progress-bar').style.width = pct + '%';
+  const next = Math.ceil((pts + 1) / NEXT_PT) * NEXT_PT;
+  document.getElementById('progress-text').textContent = next + 'pt あと残り' + (next - pts) + 'pt';
+}
+
+async function loadRecTypes() {
+  recTypes = await api('GET', '/api/rec-types');
+  renderRecGrid(); renderModalRecGrid();
+}
+
+function renderRecGrid() {
+  document.getElementById('rec-grid').innerHTML = recTypes.map((t,i) => `
+    <div class="rec-card" style="--bg-accent:${cardAccents[i%cardAccents.length]}" onclick="openModal(${t.id})">
+      <div class="rec-card-icon">${t.icon}</div>
+      <div class="rec-card-name">${t.name}</div>
+      <div class="rec-card-pts">⭐ ${t.points}pt</div>
+    </div>`).join('');
+}
+
+function renderModalRecGrid() {
+  document.getElementById('modal-rec-grid').innerHTML = recTypes.map((t,i) => `
+    <div class="rec-type-btn ${i===0?'selected':''}" data-id="${t.id}" data-pts="${t.points}" onclick="selectType(this)">
+      <span class="btn-icon">${t.icon}</span>
+      <span class="btn-label">${t.name}</span>
+    </div>`).join('');
+  if (recTypes[0]) { selectedRecTypeId = recTypes[0].id; selectedRecPts = recTypes[0].points; }
+}
+
+async function loadHistory() {
+  const list = document.getElementById('history-list');
+  const logs = await api('GET', `/api/users/${currentUser.id}/rec-logs`);
+  if (!logs.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📝</div><div class="empty-state-text">まだ記録がありません<br>レクに参加してポイントを貯めましょう！</div></div>`;
+    return;
+  }
+  list.innerHTML = logs.map(l => `
+    <div class="history-item" id="log-${l.id}">
+      <div class="history-icon">${l.type_icon}</div>
+      <div class="history-info">
+        <div class="history-name">${l.type_name}</div>
+        <div class="history-date">${formatDate(l.participated_on)}</div>
+        ${l.note ? `<div class="history-note">${l.note}</div>` : ''}
+      </div>
+      <div class="history-pts">+${l.points_earned}</div>
+      <button class="delete-btn" onclick="deleteLog(${l.id})" title="削除">✕</button>
+    </div>`).join('');
+}
+
+async function deleteLog(id) {
+  if (!confirm('この記録を削除しますか？ポイントも取り消されます。')) return;
+  await api('DELETE', `/api/rec/logs/${id}`);
+  showToast('記録を削除しました'); await loadUserData();
+}
+
+function renderRewards(rewards) {
+  document.getElementById('reward-list').innerHTML = rewards.map(r => {
+    const can = currentUser.points >= r.cost_points;
+    return `<div class="reward-card ${can?'':'locked'}">
+      <div class="reward-icon">${r.icon}</div>
+      <div class="reward-info">
+        <div class="reward-name">${r.name}</div>
+        <div class="reward-desc">${r.description||''}</div>
+        <button class="exchange-btn" ${can?'':'disabled'} onclick="exchangeReward(${r.id},'${r.name}',${r.cost_points})">
+          ${can?'交換する':'ポイント不足'}
+        </button>
+      </div>
+      <div class="reward-cost">
+        <div class="reward-cost-val">${r.cost_points}</div>
+        <div class="reward-cost-label">POINTS</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function exchangeReward(id, name, cost) {
+  if (!confirm(`「${name}」と交換しますか？\n${cost}pt 使用します。`)) return;
+  try {
+    const res = await api('POST', '/api/rewards/exchange', { user_id: currentUser.id, reward_id: id });
+    currentUser.points = res.total_points;
+    updatePointDisplay();
+    renderRewards(await api('GET', '/api/rewards'));
+    showToast(name + ' と交換しました！🎉');
+  } catch(e) { showToast(e.message, true); }
+}
+
+// ── Modal ─────────────────────────────────────
+function openModal(recTypeId) {
+  if (recTypeId) {
+    document.querySelectorAll('#modal-rec-grid .rec-type-btn').forEach(b => {
+      const sel = parseInt(b.dataset.id) === recTypeId;
+      b.classList.toggle('selected', sel);
+      if (sel) { selectedRecTypeId = recTypeId; selectedRecPts = parseInt(b.dataset.pts); }
+    });
+  }
+  document.getElementById('rec-note').value = '';
+  document.getElementById('modal').classList.add('open');
+}
+function closeModalOutside(e) { if (e.target.id==='modal') document.getElementById('modal').classList.remove('open'); }
+function selectType(el) {
+  document.querySelectorAll('#modal-rec-grid .rec-type-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedRecTypeId = parseInt(el.dataset.id);
+  selectedRecPts = parseInt(el.dataset.pts);
+}
+async function submitRec() {
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = '送信中...';
+  try {
+    const res = await api('POST', '/api/rec/logs', {
+      user_id: currentUser.id, rec_type_id: selectedRecTypeId,
+      participated_on: document.getElementById('rec-date').value,
+      note: document.getElementById('rec-note').value || null,
+    });
+    currentUser.points = res.total_points;
+    updatePointDisplay();
+    document.getElementById('modal').classList.remove('open');
+    showToast('＋' + res.points_earned + 'pt 獲得しました！🎉');
+    await loadUserData();
+  } catch(e) { showToast(e.message, true); }
+  finally { btn.disabled=false; btn.textContent='記録してポイントをもらう 🎉'; }
+}
+
+// ── Helpers ───────────────────────────────────
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type':'application/json', 'Authorization': `Bearer ${token}` } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  if (res.status === 401) { doLogout(); return; }
+  if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error || `Error ${res.status}`); }
+  if (res.status === 204) return null;
+  return res.json();
+}
+function switchTab(tab) {
+  ['home','rec','reward'].forEach(t => {
+    document.getElementById('section-'+t).classList.toggle('active',t===tab);
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+  if (tab==='rec') loadHistory();
+}
+function formatDate(s) {
+  return new Date(s).toLocaleDateString('ja-JP',{month:'long',day:'numeric',weekday:'short'});
+}
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent=msg; t.className='toast show'+(isError?' error':'');
+  setTimeout(()=>t.classList.remove('show','error'),3000);
+}
+
+tryAutoLogin();
+</script>
+</body>
+</html>
