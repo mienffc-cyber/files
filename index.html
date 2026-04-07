@@ -189,6 +189,7 @@
     <button class="nav-tab active" onclick="switchTab('home')" id="tab-home"><span class="tab-icon">🏠</span>ホーム</button>
     <button class="nav-tab" onclick="switchTab('rec')" id="tab-rec"><span class="tab-icon">📋</span>レク記録</button>
     <button class="nav-tab" onclick="switchTab('reward')" id="tab-reward"><span class="tab-icon">🎁</span>リワード</button>
+    <button class="nav-tab" onclick="switchTab('mypage')" id="tab-mypage"><span class="tab-icon">⚙️</span>設定</button>
   </div>
 
   <div class="section active" id="section-home">
@@ -211,6 +212,33 @@
   <div class="section" id="section-reward">
     <div class="section-title">リワード交換所</div>
     <div class="reward-grid" id="reward-list"><div class="loading"><div class="spinner"></div></div></div>
+  </div>
+
+  <div class="section" id="section-mypage">
+    <div class="section-title">設定</div>
+    <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 12px var(--shadow);margin-bottom:16px">
+      <div style="font-size:14px;font-weight:700;color:var(--text-dark);margin-bottom:16px">ログイン中のユーザー</div>
+      <div style="font-size:13px;color:var(--text-mid);margin-bottom:4px">ユーザー名: <span id="mypage-username" style="font-weight:700;color:var(--text-dark)"></span></div>
+      <div style="font-size:13px;color:var(--text-mid)">お名前: <span id="mypage-name" style="font-weight:700;color:var(--text-dark)"></span></div>
+    </div>
+    <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 2px 12px var(--shadow)">
+      <div style="font-size:14px;font-weight:700;color:var(--text-dark);margin-bottom:16px">パスワードを変更する</div>
+      <div id="pw-success" style="display:none;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:10px;padding:10px 14px;font-size:13px;color:#2e7d32;margin-bottom:14px">パスワードを変更しました！</div>
+      <div id="pw-error" style="display:none;background:#fee;border:1px solid #f99;border-radius:10px;padding:10px 14px;font-size:13px;color:#c0392b;margin-bottom:14px"></div>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--text-mid);margin-bottom:6px">現在のパスワード</label>
+        <input type="password" id="pw-current" class="form-input" placeholder="現在のパスワード">
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--text-mid);margin-bottom:6px">新しいパスワード（6文字以上）</label>
+        <input type="password" id="pw-new" class="form-input" placeholder="新しいパスワード">
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:12px;font-weight:700;color:var(--text-mid);margin-bottom:6px">新しいパスワード（確認）</label>
+        <input type="password" id="pw-confirm" class="form-input" placeholder="もう一度入力">
+      </div>
+      <button class="submit-btn" id="pw-btn" onclick="changePassword()">パスワードを変更する</button>
+    </div>
   </div>
 </div>
 
@@ -238,7 +266,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const API = 'https://files-production-47ea.up.railway.app';
+const API = 'http://localhost:8000';
 const NEXT_PT = 1000;
 let token = localStorage.getItem('genki_token');
 let currentUser = null;
@@ -454,11 +482,40 @@ async function api(method, path, body) {
   return res.json();
 }
 function switchTab(tab) {
-  ['home','rec','reward'].forEach(t => {
+  ['home','rec','reward','mypage'].forEach(t => {
     document.getElementById('section-'+t).classList.toggle('active',t===tab);
     document.getElementById('tab-'+t).classList.toggle('active',t===tab);
   });
   if (tab==='rec') loadHistory();
+  if (tab==='mypage') {
+    document.getElementById('mypage-username').textContent = currentUser.username;
+    document.getElementById('mypage-name').textContent = currentUser.name;
+  }
+}
+
+async function changePassword() {
+  const btn = document.getElementById('pw-btn');
+  const err = document.getElementById('pw-error');
+  const suc = document.getElementById('pw-success');
+  const cur = document.getElementById('pw-current').value;
+  const nw  = document.getElementById('pw-new').value;
+  const cfm = document.getElementById('pw-confirm').value;
+  err.style.display='none'; suc.style.display='none';
+  if (!cur || !nw || !cfm) { err.textContent='すべての項目を入力してください'; err.style.display='block'; return; }
+  if (nw.length < 6) { err.textContent='新しいパスワードは6文字以上にしてください'; err.style.display='block'; return; }
+  if (nw !== cfm) { err.textContent='新しいパスワードが一致しません'; err.style.display='block'; return; }
+  btn.disabled=true; btn.textContent='変更中...';
+  try {
+    await api('PUT', '/api/auth/change-password', { currentPassword: cur, newPassword: nw });
+    suc.style.display='block';
+    document.getElementById('pw-current').value='';
+    document.getElementById('pw-new').value='';
+    document.getElementById('pw-confirm').value='';
+  } catch(e) {
+    err.textContent = e.message; err.style.display='block';
+  } finally {
+    btn.disabled=false; btn.textContent='パスワードを変更する';
+  }
 }
 function formatDate(s) {
   return new Date(s).toLocaleDateString('ja-JP',{month:'long',day:'numeric',weekday:'short'});
